@@ -9,7 +9,25 @@
 /vendor/
 ###< symfony/framework-bundle ###
 
-###> symfony/phpunit-bridge ###
-.phpunit.result.cache
-/phpunit.xml
-###< symfony/phpunit-bridge ###
+###> webpack ###
+/node_modules/
+/public/build/
+npm-debug.log
+package-lock.json
+###< webpack ###
+
+###> IDE ###
+.idea/
+.vscode/
+###< IDE ###
+
+###> Docker ###
+docker-compose.override.yml
+###< Docker ###
+
+###> Cache and logs ###
+/var/cache/*
+/var/log/*
+###< Cache and logs ###
+
+.DS_Store
