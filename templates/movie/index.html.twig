@@ -1,0 +1,26 @@
+{# templates/movie/index.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}{% endblock %}
+
+{% block content %}
+    <div class="container mx-auto">
+        <div class="grid grid-cols-12 gap-4">
+            {# Sidebar - Genre List #}
+            <div class="col-span-3">
+                {% include 'layout/_sidebar.html.twig' %}
+            </div>
+
+            {# Main Content #}
+            <div class="col-span-9">
+                <div class="movie-featured">
+                    {# Featured Movie Section #}
+                </div>
+
+                <div class="movie-list">
+                    {# Movie List Section #}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
