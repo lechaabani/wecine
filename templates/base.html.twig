@@ -1,32 +1,19 @@
 {# templates/base.html.twig #}
 <!DOCTYPE html>
-<html>
+<html lang="fr" class="h-full bg-gray-50">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Welcome!{% endblock %}</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>🎬</text></svg>">
+    <title>{% block title %}WeCine{% endblock %}</title>
     {% block stylesheets %}
-            {{ encore_entry_link_tags('app') }}
-        {# Ici seront inclus les CSS #}
+        {{ encore_entry_link_tags('app') }}
     {% endblock %}
 </head>
-<body>
-<header>
-    {% include 'layout/_header.html.twig' %}
-</header>
-
-<main>
-    {% block content %}{% endblock %}
-</main>
-
-<footer>
-    {% include 'layout/_footer.html.twig' %}
-</footer>
+<body class="h-full">
+{% block body %}{% endblock %}
 
 {% block javascripts %}
-            {{ encore_entry_script_tags('app') }}
-    {# Ici seront inclus les JS #}
+    {{ encore_entry_script_tags('app') }}
 {% endblock %}
 </body>
 </html>
