@@ -1,86 +1,140 @@
 <?php
-// tests/Integration/Controller/MovieControllerTest.php
 
 namespace App\Tests\Integration\Controller;
 
-use App\Service\MovieDB\MovieDBClient;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
-use Symfony\Component\HttpFoundation\Response;
+use App\Service\MovieDB\MovieDBClient;
+use App\Dto\MovieDto;
 
 class MovieControllerTest extends WebTestCase
 {
     private $client;
-    private $movieDBClientMock;
 
     protected function setUp(): void
     {
         $this->client = static::createClient();
 
-        // Mock du service MovieDBClient
-        $this->movieDBClientMock = $this->createMock(MovieDBClient::class);
+        // Exemple de données pour un film
+        $movieData = [
+            'id' => 1,
+            'title' => 'Test Movie',
+            'overview' => 'This is a test overview.',
+            'poster_path' => '/test.jpg',
+            'poster_url' => 'https://image.tmdb.org/t/p/w500/test.jpg',
+            'release_date' => '2024-01-01',
+            'vote_average' => 8.0,
+            'vote_count' => 100,
+            'genres' => ['Action'],
+        ];
 
-        // Configuration du mock avec des données de test
-        $this->movieDBClientMock
-            ->method('getGenres')
-            ->willReturn([
-                ['id' => 1, 'name' => 'Action'],
-                ['id' => 2, 'name' => 'Comedy']
-            ]);
+        // Mock des méthodes avec des objets MovieDto
+        $mockMovieDBClient = $this->createMock(MovieDBClient::class);
 
-        $this->movieDBClientMock
-            ->method('getPopularMovies')
-            ->willReturn([
-                'results' => [
-                    [
-                        'id' => 1,
-                        'title' => 'Test Movie',
-                        'overview' => 'Test Overview',
-                        'poster_path' => '/test.jpg'
-                    ]
-                ]
-            ]);
+        $mockMovieDBClient->method('getGenres')->willReturn([
+            ['id' => 1, 'name' => 'Action'],
+            ['id' => 2, 'name' => 'Comedy']
+        ]);
 
-        // Remplacer le service réel par notre mock
-        self::getContainer()->set('App\Service\MovieDB\MovieDBClient', $this->movieDBClientMock);
+        $mockMovieDBClient->method('getPopularMovies')->willReturn([
+            new MovieDto($movieData),
+        ]);
+
+        $mockMovieDBClient->method('getMovieDetails')->willReturn(
+            new MovieDto($movieData)
+        );
+
+        $mockMovieDBClient->method('searchMovies')->willReturn([
+            new MovieDto($movieData),
+        ]);
+
+        $mockMovieDBClient->method('getMoviesByGenre')->willReturn([
+            new MovieDto($movieData),
+        ]);
+
+        // Injecter le mock dans le conteneur
+        self::getContainer()->set(MovieDBClient::class, $mockMovieDBClient);
     }
 
-    public function testIndex(): void
+    public function testGetMoviesList(): void
     {
-        $crawler = $this->client->request('GET', '/');
+        $this->client->request('GET', '/api/movies/list');
 
         $this->assertResponseIsSuccessful();
-        $this->assertSelectorExists('h1'); // Vérifie qu'il y a un h1
+        $response = json_decode($this->client->getResponse()->getContent(), true);
+
+        $this->assertIsArray($response);
+        $this->assertNotEmpty($response);
+        $this->assertEquals('Test Movie', $response[0]['title']);
     }
 
-    public function testGenreList(): void
+    public function testGetMovieDetails(): void
     {
-        $crawler = $this->client->request('GET', '/');
+        $this->client->request('GET', '/api/movie/1');
 
         $this->assertResponseIsSuccessful();
-        $this->assertSelectorExists('.genre-list');
-        $this->assertSelectorTextContains('.genre-list', 'Action'); // Vérifie qu'on trouve le genre "Action"
+        $response = json_decode($this->client->getResponse()->getContent(), true);
+
+        $this->assertIsArray($response);
+        $this->assertEquals('Test Movie', $response['title']);
+        $this->assertEquals(8.0, $response['vote_average']);
     }
 
-    public function testMovieList(): void
+    public function testGetGenresList(): void
     {
-        $crawler = $this->client->request('GET', '/');
+        $this->client->request('GET', '/api/genre/movie/list');
 
         $this->assertResponseIsSuccessful();
-        $this->assertSelectorExists('.movie-list');
-        $this->assertSelectorTextContains('.movie-list', 'Test Movie'); // Vérifie qu'on trouve le titre du film test
+        $response = json_decode($this->client->getResponse()->getContent(), true);
+
+        $this->assertIsArray($response);
+        $this->assertCount(2, $response);
+        $this->assertEquals('Action', $response[0]['name']);
     }
 
-    public function testInvalidRoute(): void
+    public function testSearchMovies(): void
     {
-        $this->client->request('GET', '/invalid-route');
-        $this->assertResponseStatusCodeSame(Response::HTTP_NOT_FOUND);
+        $this->client->request('GET', '/api/movies/search?q=Test');
+
+        $this->assertResponseIsSuccessful();
+        $response = json_decode($this->client->getResponse()->getContent(), true);
+
+        $this->assertIsArray($response);
+        $this->assertNotEmpty($response);
+        $this->assertEquals('Test Movie', $response[0]['title']);
     }
 
-    protected function tearDown(): void
+    public function testGenreMovies(): void
     {
-        parent::tearDown();
-        // Nettoyage après chaque test
-        $this->client = null;
-        $this->movieDBClientMock = null;
+        $this->client->request('GET', '/genre/1');
+
+        $this->assertResponseIsSuccessful();
+        $response = $this->client->getResponse()->getContent();
+
+        $this->assertStringContainsString('Test Movie', $response);
+    }
+
+    public function testApiGenreMovies(): void
+    {
+        $this->client->request('GET', '/api/genre/1/movies');
+
+        $this->assertResponseIsSuccessful();
+        $response = json_decode($this->client->getResponse()->getContent(), true);
+
+        $this->assertIsArray($response);
+        $this->assertNotEmpty($response);
+        $this->assertEquals('Test Movie', $response[0]['title']);
+    }
+
+    public function testRateMovie(): void
+    {
+        $this->client->request('POST', '/api/movie/1/rate', [
+            'rating' => 5,
+        ]);
+
+        $this->assertResponseIsSuccessful();
+        $response = json_decode($this->client->getResponse()->getContent(), true);
+
+        $this->assertIsArray($response);
+        $this->assertTrue($response['success']);
     }
 }
